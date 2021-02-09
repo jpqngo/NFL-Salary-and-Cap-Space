@@ -1,0 +1,274 @@
+---
+title: "NFL Salary Analysis"
+author: "Jeffrey Ngo"
+date: "2/9/2021"
+output: 
+  html_document:
+    number_sections: true
+    toc: true
+    code_folding: "hide"
+    theme: readable
+    highlight: haddock
+    
+---
+
+
+# ***Introduction*** 
+
+The roster of an NFL football team my go through significant changes every year throughout the offseason. Teams may spend more money in different positions than other teams in the league. Throughout the league’s history, different ideologies have been made to reflect how teams won in the past. These ideologies vary from things like “defense win games”, “the league is a passing league, and the Quarterback position is the most important role”, “teams need to win while maximizing rookie contracts.” These are only a few ideas of all the many different takes on NFL football. This analysis will look at how the different ways of spending cap space impacts the number of games a team wins in a season.
+
+This data was scraped from [spotrac](https://www.spotrac.com/nfl/cap/)
+Steps taken to scrap the data will be added to a separate file and linked to later.
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(knitr)
+```
+
+# ***Load and Clean Data***
+
+```{r}
+overall_team_salary <- read_excel("C:/Users/My Gaming PC/Desktop/Data Portfolio/NFL Salary Analysis/NFL_Team_Cap_Money.xlsx")
+
+positional_salary <- read_excel("C:/Users/My Gaming PC/Desktop/Data Portfolio/NFL Salary Analysis/NFL_Positions_Team_Spendings.xlsx")
+
+combined_data <- merge(overall_team_salary, positional_salary, by =c("Team", "Year"))
+
+glimpse(combined_data)
+```
+
+The Washington Football Team changed their team name before the 2020 season. To make the data consistent the "Redskins" Will be updated to the "Washington Football Team". In addition, the column "Total" will be removed, as it is a repeat variable identical to the variable "ACtive." This occurred when merging the two datasets into the combined dataset.
+```{r}
+combined_data[95,1] <- "Washington Football Team"
+combined_data[96,1] <- "Washington Football Team"
+
+combined_data <- subset(combined_data, select = c(1:19))
+
+str(combined_data)
+```
+
+# ***Data Visualization***
+
+## **Statistical Summary**
+
+```{r}
+summary(combined_data)
+```
+Looking at the summary statistics, the data shows the team’s overall money spent and how much money was spent for each position on the roster. The data shows the different linemen on each side of the field as a combined whole, being “OL” for offensive linemen and “DL” for defensive linemen. For the season 2018 – 2020, The average team spends about $188M for the whole team in a span of 1 season. Teams on average spend the least amount of money on the running back/full position, tight end position, and special teams’ players. On average, the bulk of a team’s spending goes to the offensive line, defensive line, and defensive backs. For most teams, money used on quarterbacks, wide receivers, and linebacker are in the middle. 
+
+## **Univariate Plot**
+
+Creating a univariate density plot will show the distribution of how much money NFL teams usually spend on a position.
+
+```{r, fig.width = 10}
+library(gridExtra)
+
+dg1 <- ggplot(data = combined_data, aes(x = QB)) +
+  geom_density()
+
+dg2 <- ggplot(data = combined_data, aes(x = RB_FB)) +
+  geom_density()
+
+dg3 <- ggplot(data = combined_data, aes(x = WR)) +
+  geom_density()
+
+dg4 <- ggplot(data = combined_data, aes(x = TE)) +
+  geom_density()
+
+dg5 <- ggplot(data = combined_data, aes(x = OL)) +
+  geom_density()
+
+dg6 <- ggplot(data = combined_data, aes(x = DL)) +
+  geom_density()
+
+dg7 <- ggplot(data = combined_data, aes(x = LB)) +
+  geom_density()
+
+dg8 <- ggplot(data = combined_data, aes(x = DB)) +
+  geom_density()
+
+dg9 <- ggplot(data = combined_data, aes(x = K_P_LS)) +
+  geom_density()
+
+dg10 <- ggplot(data = combined_data, aes(Win_Percentage)) +
+  geom_density()
+
+dg11 <- ggplot(data = combined_data, aes(Active)) +
+  geom_density()
+
+dg12 <- ggplot(data = combined_data, aes(Dead)) +
+  geom_density()
+
+dg13 <- ggplot(data = combined_data, aes(Total_Cap)) +
+  geom_density()
+
+dg14 <- ggplot(data = combined_data, aes(Cap_Space_All)) +
+  geom_density()
+
+grid.arrange(dg1, dg2, dg3, dg4, dg5, dg6, dg7, dg8, dg9, dg10, dg11, dg12, dg13, dg14, ncol = 4)
+```
+
+This plot shows that most of the data looks normally distributed or otherwise skewed to the left. 
+
+## **Bivariate Plot**
+
+
+```{r}
+os1 <- ggplot(data = combined_data, aes(x = Active, y = Win_Percentage)) +
+  geom_point()
+
+os2 <- ggplot(data = combined_data, aes(x = Dead, y = Win_Percentage)) +
+  geom_point()
+
+os3 <- ggplot(data = combined_data, aes(x = Total_Cap, y = Win_Percentage)) +
+  geom_point()
+
+os4 <- ggplot(data = combined_data, aes(x = Cap_Space_All, y = Win_Percentage)) +
+  geom_point()
+
+grid.arrange(os1, os2, os3, os4)
+
+
+```
+
+This bivariate plot represents the team’s overall spending. The plot, indicates that a team’s active money may have linear correlation to the win percentage in a season. As the amount of active money increases, the win percentage also increases. The other variables do not seem to have any significant visual correlation to win percentage.
+
+```{r}
+eg_1 <- ggplot(data = combined_data, aes(x = QB, y = Win_Percentage)) +
+  geom_point()
+
+eg_2 <- ggplot(data = combined_data, aes(x = RB_FB, y = Win_Percentage)) +
+  geom_point()
+
+eg_3 <- ggplot(data = combined_data, aes(x = WR, y = Win_Percentage)) +
+  geom_point()
+
+eg_4 <- ggplot(data = combined_data, aes(x = TE, y = Win_Percentage)) +
+  geom_point()
+
+eg_5 <- ggplot(data = combined_data, aes(x = OL, y = Win_Percentage)) +
+  geom_point()
+
+eg_6 <- ggplot(data = combined_data, aes(x = DL, y = Win_Percentage)) +
+  geom_point()
+
+eg_7 <- ggplot(data = combined_data, aes(x = LB, y = Win_Percentage)) +
+  geom_point()
+
+eg_8 <- ggplot(data = combined_data, aes(x = DB, y = Win_Percentage)) +
+  geom_point()
+
+eg_9 <- ggplot(data = combined_data, aes(x = K_P_LS, y = Win_Percentage)) +
+  geom_point()
+
+grid.arrange(eg_1, eg_2, eg_3, eg_4, eg_5, eg_6, eg_7, eg_8, eg_9, ncol = 3)
+```
+```{r}
+ggplot(data = combined_data, aes(x = QB, y = Win_Percentage, label = Team)) +
+  geom_point() +
+  scale_y_continuous(breaks = seq(0, 1.0, 0.2), minor_breaks = F) +
+  scale_x_continuous(breaks = seq(0, 50000000, 5000000), minor_breaks = F)+
+  geom_text( size = 3, vjust = 0, nudge_y = 0.005, angle = 30)
+```
+
+The next bivariate plot shows the amount of money teams spend on the different positions. Possible linear correlations include the offensive line, defensive backs, and kickers/punters. A noticeable thing is the QB plot has an outlier on the far right of the plot. This spending is almost double of most teams. Doing further research, this point is in the 2020 season for the Indianapolis Colts team. They acquired Phillip Rivers over the offseason and in the prior season before gave Jacoby Brissett a contract extension for being a starter. Whiling keep both QBs on the roster, the amount spent become inflated compared to other teams.  
+
+# ***Linear Regression Model***
+
+## **Initial Model for Postional Spending**
+
+```{r}
+MLR <- lm(Win_Percentage ~ QB + RB_FB + WR + TE + OL + DL + LB + DB + K_P_LS, data = combined_data)
+
+summary(MLR)
+```
+
+## **Reduced Model for Positional Spending**
+
+```{r}
+Reduced_MLR <- lm(Win_Percentage ~ QB + OL + DL + LB + DB + K_P_LS, data = combined_data)
+
+summary(Reduced_MLR)
+```
+## **Residuals**
+
+```{r}
+#Create predictions based off MLR model 
+ 
+RM_pred <- predict(Reduced_MLR) #Reduced Model
+
+#Create residuals of both models 
+
+Reduced_MLR_resid <- resid(Reduced_MLR)
+
+```
+
+```{r}
+#Plot Actual vs Predicted for Reduced Model 
+
+plot(combined_data$Win_Percentage, RM_pred,
+     xlab = "Actual", ylab = "Predicted" , main = "Reduced Model")
+abline(a=0,b=1)
+```
+
+```{r}
+#Plot Residuals for Reduced Model
+par(mfrow=c(2,2))
+plot(Reduced_MLR)
+```
+
+For this analysis, the goal is to create a linear regression model, calculating the win percentage based on the money a NFL team spends on each position.  The initial model includes all the positions on the roster. After taking a look at the summary, a reduced model was created using only the statistically significant variables in the initial model. The multiple linear regression model has a R-squared value of 0.44 and a residual standard error of 0.15 on 89 degrees of freedom. The residuals show that the model is a mediocre fit for the data due to the variance it does not cover. 
+
+## **Linear Model for Active Spending**
+```{r}
+Team_MLR <- lm(Win_Percentage ~ Active, data = combined_data)
+
+summary(Team_MLR)
+```
+ A second linear regression model is created to show the correlation of active money spent on win percentage. The variable Active is statistically significant with win percentage but due the complex data, the model does not cover much of the variance found. This is indicated in the low R-squared value of 0.3805. 
+ 
+## **Residuals for Active Spending** 
+ 
+```{r}
+#Create predictions based off MLR model 
+ 
+Team_pred <- predict(Team_MLR) #Reduced Model
+
+#Create residuals of both models 
+
+Reduced_MLR_resid <- resid(Team_MLR)
+
+```
+
+```{r}
+#Plot Actual vs Predicted for Reduced Model 
+
+plot(combined_data$Win_Percentage, Team_pred,
+     xlab = "Actual", ylab = "Predicted" , main = "Team Active Model")
+abline(a=0,b=1)
+```
+
+```{r}
+#Plot Residuals for Reduced Model
+par(mfrow=c(2,2))
+plot(Team_MLR)
+```
+
+# ***Limitations and Application***
+
+## **Limitations**
+
+There are a few noticeable limitations to this analysis. The first being that the data does not go into a deep dive on how money is allocated in each unique position. For example, if a team spends 25M on the offensive line for a year, the data does not indicate if most of that money is going to one star player or spread out evenly amongst many players. Secondly the data does not reflect injuries that could have happened throughout the season. Injuries could have a season altering effect on a team’s win percentage. For example, if a team spends 30M on a star QB but he is injured in week 1; and the team has a losing record. This unplanned outcome does not entirely reflect a team’s expectations coming into the season and the data that is historically recorded. The third limitation is the analysis does not account how deep the game really is. In a football game, there are many other factors than the 22 players on the field. This includes coaching, management, referees, and practice. Even with these limitations, this analysis can still be of use.
+
+## **Course of Action**
+
+The linear models that were created throughout the analysis can still be of use. Teams can use the model to create realistic goals for their teams coming into the season. For example, a team that spends less money may make it their goal to rebuild and find new talent throughout the season. On the other hand, a team that spends a lot of money may make it their goal to reach the playoffs or win a Superbowl. The model may also be useful in off season planning by prioritizing money on statistically significant positions. One course of action is to spend less money on wide receivers and focus spending money on the defensive line. The model is far from perfect, but it still has some useful aspects to it.
+
+## **Ending**
+
+Thank you for reading my analysis. This was a for fun project I wanted to do with a topic that interests me. I am pretty satisfied with the outcome of this project, as this was the first time, I scraped data off the internet and created my own analysis. Please comment any critiques or ideas you may have, and I will be sure to implement them in my next project. 
+
+
+

@@ -1,0 +1,40 @@
+NFL SALARY EDITS 
+
+TAKE OUT 2/9/2021
+
+```{r}
+cd_2018 <- combined_data %>%
+  filter(Year == '2018')
+
+cd_2019 <- combined_data %>%
+  filter(Year == '2019')
+
+cd_2020 <- combined_data %>%
+  filter(Year == '2020')
+
+glimpse(cd_2018)
+```
+
+```{r fig.width = 9, fig.height = 8}
+qb_2018 <- ggplot(data = cd_2018, aes_string(x = 'QB', y = 'Win_Percentage', label = 'Team')) +
+  geom_point() +
+  scale_y_continuous(breaks = seq(0, 1.0, 0.2), minor_breaks = F) +
+  scale_x_continuous(breaks = seq(0, 30000000, 5000000), minor_breaks = F)+
+  geom_text( size = 3, vjust = 0, nudge_y = 0.005, angle = 30)
+
+qb_2019 <- ggplot(data = cd_2019, aes_string(x = 'QB', y = 'Win_Percentage', label = 'Team')) +
+  geom_point() +
+  scale_y_continuous(breaks = seq(0, 1.0, 0.2), minor_breaks = F) +
+  scale_x_continuous(breaks = seq(0, 30000000, 5000000), minor_breaks = F) +
+  geom_text( size = 3, vjust = 0, nudge_y = 0.01, angle = 30)
+
+qb_2020 <- ggplot(data = cd_2020, aes_string(x = 'QB', y = 'Win_Percentage', label = 'Team')) +
+  geom_point() +
+  scale_y_continuous(breaks = seq(0, 1.0, 0.2), minor_breaks = F) +
+  scale_x_continuous(breaks = seq(0, 50000000, 5000000), minor_breaks = F)+
+  geom_text( size = 3, vjust = 0, nudge_y = 0.005, angle = 30)
+
+library(gridExtra)
+
+qb_2020
+```

@@ -1,0 +1,286 @@
+---
+title: "NFL Salary Analysis"
+author: "Jeffrey Ngo"
+date: "12/28/2020"
+output: html_document
+---
+
+Scrap data from website 
+```{r}
+library(rvest)
+library(dplyr)
+library(tidyr)
+
+```
+
+Team Salary Cap
+
+```{r}
+
+team_sal_link <- "https://www.spotrac.com/nfl/cap/"
+team_sal_page <- read_html(team_sal_link)
+
+#For Loop to scrape data table from multiple pages 
+team_table_all = data.frame()
+
+for (page_result in seq(from = 2018, to = 2020, by = 1)) {
+  team_sal_link = paste0("https://www.spotrac.com/nfl/cap/", page_result, "")
+  
+  team_sal_page = read_html(team_sal_link)
+  
+  team_table_all = rbind(team_table_all, html_table(team_sal_page) %>% .[[1]])
+  
+}
+```
+
+Positional Spending 
+
+```{r}
+pos_sal_link <- "https://www.spotrac.com/nfl/positional/breakdown/"
+pos_sal_page <- read_html(pos_sal_link)
+
+#For Loop to scrape data table from multiple pages 
+pos_table_all = data.frame()
+
+for (page_result in seq(from = 2018, to = 2020, by = 1)) {
+  pos_sal_link = paste0("https://www.spotrac.com/nfl/positional/breakdown/", page_result, "")
+  
+  pos_sal_page = read_html(pos_sal_link)
+  
+  pos_table_all = rbind(pos_table_all, html_table(pos_sal_page) %>% .[[1]])
+  
+}  
+```
+
+Clean Data
+
+Salary Spending of Teams
+```{r}
+
+team_table_all <- team_table_all %>% separate('Total Cap', "Total_Cap")
+team_table_all <- team_table_all %>% separate('Cap Space(All)', "Cap_Space_All")
+
+team_table_all<- team_table_all %>% 
+  mutate("Active" = as.numeric(gsub("[\\$,]", "", Active)),
+         "Dead" = as.numeric(gsub("[\\$,]", "", Dead)),
+         "Total_Cap" = as.numeric(as.character(Total_Cap)),
+         "Cap_Space_All" = as.numeric(as.character(Cap_Space_All))) %>%
+  rename(Win_Percentage = 'Win %',
+         Avg_Age = 'Avg Age')
+
+glimpse(team_table_all)
+
+
+```
+
+Add Year and Remove Rank 
+
+```{r}
+
+team_table_all <- team_table_all %>% rename(Year = 'Rank')
+
+team_table_all[1:32, 1] <- 2018
+team_table_all[33:64, 1] <-2019
+team_table_all[65:96, 1] <-2020
+
+#Filling in NA Values 
+
+NAcol <- which(colSums(is.na(team_table_all)) > 0)
+sort(colSums(sapply(team_table_all[NAcol], is.na)), decreasing = TRUE)
+
+cat('There are', length(NAcol), 'column(s) with missing values')
+
+which(is.na(team_table_all$Cap_Space_All), arr.ind=TRUE)
+
+#row 32 and 64 
+#Cross- Referenced original data 
+
+#Row 32 
+#$-2,821,461
+team_table_all[32,9] <- as.numeric(2821461) * -1
+
+#Row 64
+#$-2,323,572
+
+team_table_all[64,9] <- as.numeric(2323572) * -1
+
+glimpse(team_table_all)
+```
+Clean Team Column values 
+```{r}
+
+
+team_table_names <- c("Cleveland Browns",
+"Indianapolis Colts",
+"San Francisco 49ers",
+"Tennessee Titans",
+"Pittsburgh Steelers",
+"New York Jets",
+"Houston Texans",
+"Dallas Cowboys",
+"Baltimore Ravens",
+"Buffalo Bills",
+"Cincinnati Bengals",
+"Miami Dolphins",
+"New York Giants",
+"Jacksonville Jaguars",
+"Philadelphia Eagles",
+"Oakland Raiders",
+"Washington Redskins",
+"Arizona Cardinals",
+"Detroit Lions",
+"Denver Broncos",
+"Green Bay Packers",
+"Chicago Bears",
+"Atlanta Falcons",
+"New England Patriots",
+"Kansas City Chiefs",
+"Seattle Seahawks",
+"Los Angeles Chargers",
+"Tampa Bay Buccaneers",
+"Los Angeles Rams",
+"New Orleans Saints",
+"Minnesota Vikings",
+"Carolina Panthers",
+"Indianapolis Colts",
+"Kansas City Chiefs",
+"Cleveland Browns",
+"Philadelphia Eagles",
+"Buffalo Bills",
+"Miami Dolphins",
+"Tennessee Titans",
+"Houston Texans",
+"Oakland Raiders",
+"Dallas Cowboys",
+"Detroit Lions",
+"New York Jets",
+"Washington Redskins",
+"Denver Broncos",
+"Chicago Bears",
+"Seattle Seahawks",
+"Cincinnati Bengals",
+"Jacksonville Jaguars",
+"Tampa Bay Buccaneers",
+"San Francisco 49ers",
+"Carolina Panthers",
+"Los Angeles Rams",
+"Atlanta Falcons",
+"New England Patriots",
+"Green Bay Packers",
+"Los Angeles Chargers",
+"New Orleans Saints",
+"New York Giants",
+"Arizona Cardinals",
+"Minnesota Vikings",
+"Pittsburgh Steelers",
+"Baltimore Ravens",
+"Cleveland Browns",
+"New York Jets",
+"Dallas Cowboys",
+"New England Patriots",
+"Jacksonville Jaguars",
+"Philadelphia Eagles",
+"Washington Football Team",
+"Denver Broncos",
+"Miami Dolphins",
+"Detroit Lions",
+"Cincinnati Bengals",
+"Indianapolis Colts",
+"Chicago Bears",
+"New York Giants",
+"Los Angeles Rams",
+"Los Angeles Chargers",
+"Houston Texans",
+"Pittsburgh Steelers",
+"Kansas City Chiefs",
+"Las Vegas Raiders",
+"Tampa Bay Buccaneers",
+"New Orleans Saints",
+"Green Bay Packers",
+"San Francisco 49ers",
+"Tennessee Titans",
+"Seattle Seahawks",
+"Minnesota Vikings",
+"Carolina Panthers",
+"Atlanta Falcons",
+"Buffalo Bills",
+"Baltimore Ravens",
+"Arizona Cardinals")
+
+team_table_all$Team <- team_table_names
+
+```
+
+Clean Positional Salary Spending Data 
+
+```{r}
+glimpse(pos_table_all)
+```
+
+
+```{r}
+
+pos_table_all <- pos_table_all %>% separate('QB', "QB")
+pos_table_all <- pos_table_all %>% separate('RB/FB', "RB_FB")
+pos_table_all <- pos_table_all %>% separate('WR', "WR")
+pos_table_all <- pos_table_all %>% separate('TE', "TE")
+pos_table_all <- pos_table_all %>% separate('OL', "OL")
+pos_table_all <- pos_table_all %>% separate('DL', "DL")
+pos_table_all <- pos_table_all %>% separate('LB', "LB")
+pos_table_all <- pos_table_all %>% separate('DB', "DB")
+pos_table_all <- pos_table_all %>% separate('K/P/LS', "K_P_LS")
+pos_table_all <- pos_table_all %>% separate('Total', "Total")
+
+
+pos_table_all <- pos_table_all %>%
+  mutate("QB" = as.numeric(as.character(QB)),
+         "RB/FB" = as.numeric(as.character(RB_FB)),
+         "WR" = as.numeric(as.character(WR)),
+         "TE" = as.numeric(as.character(TE)),
+         "OL" = as.numeric(as.character(OL)),
+         "DL" = as.numeric(as.character(DL)),
+         "LB" = as.numeric(as.character(LB)),
+         "DB" = as.numeric(as.character(DB)),
+         "K/P/LS" = as.numeric(as.character(K_P_LS)),
+         "Total" = as.numeric(as.character(Total)))
+
+
+pos_table_all$RB_FB <- as.numeric(as.character(pos_table_all$RB_FB))
+pos_table_all$K_P_LS <- as.numeric(as.character(pos_table_all$K_P_LS))
+
+pos_table_all$'RB/FB' <- NULL
+pos_table_all$'K/P/LS' <- NULL
+
+glimpse(pos_table_all)
+
+
+```
+
+Add Year Variable
+```{r}
+#Add Year column to dataframe 
+year_vector <- rep(c(2018), times = 33)
+year_vector <- append(year_vector, rep(c(2019), times =33))
+year_vector <- append(year_vector, rep(c(2020), times =33))
+
+pos_table_all$Year <- year_vector
+
+glimpse(pos_table_all)
+```
+
+Remove Average Rows
+```{r}
+#Remove Season Average Rows (33,66,99)
+
+pos_table_all <- pos_table_all[-c(33,66,99),]
+```
+
+
+Export into Excel 
+```{r}
+library(writexl)
+
+write_xlsx(team_table_all,"C:\\Users\\My Gaming PC\\Desktop\\Data Portfolio\\NFL_Team_Cap_Money.xlsx")
+write_xlsx(pos_table_all,"C:\\Users\\My Gaming PC\\Desktop\\Data Portfolio\\NFL_Positions_Team_Spendings.xlsx")
+```
+
